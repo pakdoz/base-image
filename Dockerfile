@@ -1,19 +1,13 @@
-FROM php:7.1-fpm
+FROM php:7.1-fpm-alpine
 
 MAINTAINER sadoknet@gmail.com
 ENV DEBIAN_FRONTEND=noninteractive
 
+RUN echo -e '@edgunity http://nl.alpinelinux.org/alpine/edge/community\n@edge http://nl.alpinelinux.org/alpine/edge/main\n@testing http://nl.alpinelinux.org/alpine/edge/testing' >> /etc/apk/repositories
+
 RUN \
-  	apt-get -y update && \
-  	apt-get -y install \
-  	nginx supervisor zip unzip\
-	imagemagick webp &&\
-#install dependencies
- 	apt-get -y install \
-    gcc nasm build-essential make wget vim git && \
-    echo "deb http://packages.dotdeb.org jessie all" >> /etc/apt/sources.list.d/dotdeb.org.list && \
-    echo "deb-src http://packages.dotdeb.org jessie all" >> /etc/apt/sources.list.d/dotdeb.org.list && \
-    wget -O- http://www.dotdeb.org/dotdeb.gpg | apt-key add -
+    apk add --update nginx supervisor zip unzip  \
+    imagemagick@edge libwebp gcc g++ nasm make wget vim git shadow@edgunity bash
 
 #PHP7 dependencies
 RUN docker-php-ext-install opcache
@@ -27,13 +21,24 @@ RUN \
     make && \
     make install
 
-#facedetect script
-RUN \
-	cd /var && \
-    apt-get -y install python3 python3-numpy libopencv-dev python3-setuptools && \
-    easy_install3 pip && \
-    pip install numpy && \
-    pip install opencv-python && \
+#facedetect
+RUN apk add --update \
+    python3 python3-dev py-pip build-base ffmpeg-libs musl cairo libdc1394 libgcc gtk+3.0 gdk-pixbuf glib \
+    libgomp libgphoto2 gst-plugins-base1 gstreamer1 libjpeg-turbo libpng libstdc++ tiff zlib \
+    musl libgcc opencv-libs libstdc++ \
+    jasper-libs@edge \
+    py-numpy@edgunity \
+    openexr@edgunity \
+    libwebp@edge \
+    ilmbase@edgunity \
+    opencv@testing
+
+RUN apk add --update opencv-dev@testing
+RUN pip3 install --upgrade pip
+RUN pip3 install --user opencv-python  
+RUN pip install numpy opencv-python
+
+RUN cd /var && \
     git clone https://github.com/wavexx/facedetect.git && \
     chmod +x /var/facedetect/facedetect && \
     ln -s /var/facedetect/facedetect /usr/local/bin/facedetect
@@ -50,7 +55,7 @@ RUN \
 curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 #copy etc/
-COPY docker/resources/etc/ /etc/
+COPY resources/etc/ /etc/
 
 COPY .    /var/www/html
 
@@ -64,6 +69,8 @@ RUN usermod -u 1000 www-data && \
     chown -R www-data:www-data var/  web/uploads/ && \
     chmod 777 -R var/  web/uploads/
 
+RUN rm -rf /var/cache/apk/*
+
 EXPOSE 80
 
-CMD ln /dev/null /dev/raw1394;/usr/bin/supervisord
+ENTRYPOINT ["supervisord", "--nodaemon", "--configuration", "/etc/supervisord/supervisord.conf"]
