@@ -22,22 +22,57 @@ RUN \
     make install
 
 #facedetect
+#1 OpenCV
 RUN apk add --update \
-    python3 python3-dev py-pip build-base ffmpeg-libs musl cairo libdc1394 libgcc gtk+3.0 gdk-pixbuf glib \
-    libgomp libgphoto2 gst-plugins-base1 gstreamer1 libjpeg-turbo libpng libstdc++ tiff zlib \
-    musl libgcc opencv-libs libstdc++ \
-    jasper-libs@edge \
-    py-numpy@edgunity \
-    openexr@edgunity \
-    libwebp@edge \
-    ilmbase@edgunity \
-    opencv@testing
+  bash@edge \
+  python2@edge \
+  python2-dev@edge \
+  python3@edge \
+  python3-dev@edge \
+  make \
+  cmake \
+  gcc \
+  g++ \
+  pkgconf \
+  py-pip \
+  build-base \
+  gsl \
+  libavc1394-dev  \
+  libtbb@testing  \
+  libtbb-dev@testing   \
+  libjpeg  \
+  libjpeg-turbo-dev \
+  libpng-dev \
+  libjasper \
+  libdc1394-dev \
+  clang-dev \
+  clang \
+  tiff-dev \
+  libwebp-dev@edge \
+  py-numpy-dev@edgunity \
+  py-scipy-dev@testing \
+  openblas-dev@edgunity \
+  linux-headers
 
-RUN apk add --update opencv-dev@testing
-RUN pip3 install --upgrade pip
-RUN pip3 install --user opencv-python  
-RUN pip install numpy opencv-python
+ENV CC /usr/bin/clang
+ENV CXX /usr/bin/clang++
 
+RUN mkdir -p /opt && cd /opt && \
+  wget https://github.com/opencv/opencv/archive/3.1.0.zip && \
+  unzip 3.1.0.zip && \
+  cd /opt/opencv-3.1.0 && \
+  mkdir build && \
+  cd build && \
+  cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local -D WITH_FFMPEG=NO \
+  -D WITH_IPP=NO -D WITH_OPENEXR=NO .. && \
+  make VERBOSE=1 && \
+  make && \
+  make install
+
+RUN ln -s /var/www/html/opencv-3.1.0/build/lib/python3/cv2.cpython-36m-x86_64-linux-gnu.so /usr/lib/python3.6/site-packages/cv2.so
+RUN ln /dev/null /dev/raw1394
+
+#2 Facedetect lib
 RUN cd /var && \
     git clone https://github.com/wavexx/facedetect.git && \
     chmod +x /var/facedetect/facedetect && \
@@ -70,6 +105,8 @@ RUN usermod -u 1000 www-data && \
     chmod 777 -R var/  web/uploads/
 
 RUN rm -rf /var/cache/apk/*
+
+
 
 EXPOSE 80
 
