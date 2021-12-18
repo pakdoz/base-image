@@ -10,7 +10,7 @@ RUN \
   	apt-get -y install --no-install-recommends \
   	nginx zip unzip\
 	imagemagick webp libmagickwand-dev libyaml-dev \
-	python3.6 python3-numpy libopencv-dev python3-setuptools opencv-data \
+	python3.6 python3-numpy libopencv-dev libssl-dev libffi-dev python3-dev python3-setuptools opencv-data \
     gcc nasm build-essential make wget vim git && \
     rm -rf /var/lib/apt/lists/*
 
