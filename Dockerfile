@@ -34,17 +34,6 @@ RUN \
     make && \
     make install
 
-#facedetect script
-RUN \
-	cd /var && \
-    curl https://bootstrap.pypa.io/pip/3.5/get-pip.py -o get-pip.py && \
-    python3 get-pip.py && \
-    pip3 install numpy && \
-    pip3 install opencv-python && \
-    git clone https://github.com/flyimg/facedetect.git && \
-    chmod +x /var/facedetect/facedetect && \
-    ln -s /var/facedetect/facedetect /usr/local/bin/facedetect
-
 #Smart Cropping pytihon plugin
 RUN pip install git+https://github.com/flyimg/python-smart-crop
 
